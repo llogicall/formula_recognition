@@ -60,15 +60,6 @@ powershell -ExecutionPolicy Bypass -File scripts/build_exe.ps1
 
 输出：`dist/FormulaRecognition/FormulaRecognition.exe`
 
-## 使用说明
-
-详细操作请参阅 **[用户说明书](USER_MANUAL.md)**，包含：
-
-- 首次配置指引
-- 截图识别操作
-- 历史记录管理
-- 常见问题解答
-
 ## 配置
 
 运行时配置保存在 `data/config.json`（已加入 `.gitignore`，不会误提交）。
@@ -120,6 +111,4 @@ formula_recognition/
 - 历史记录和截图可能包含敏感屏幕内容
 - 建议使用专用历史目录存储机密公式
 
-## License
 
-尚未添加许可证文件。发布前请添加 `LICENSE` 文件以明确授权条款。
