@@ -1,45 +1,67 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: Release on Windows
 
 on:
   push:
     tags:
-      - '*'           
-  workflow_dispatch:    # 同时也支持手动触发（便于测试）
+      - '*'                 
+  workflow_dispatch:        
+    inputs:
+      tag:
+        description: 'Release tag (e.g., 1.0.0 或 v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+        type: string
 
 jobs:
   build:
-    runs-on: windows-latest   # 使用 Windows 运行器
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
-
+        uses: actions/checkout@v5     
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'  
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt 
-          pip install pyinstaller           
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Debug tag info
+        run: |
+          echo "github.ref: ${{ github.ref }}"
+          echo "github.ref_name: ${{ github.ref_name }}"
+          echo "github.ref_type: ${{ github.ref_type }}"
+          echo "inputs.tag: ${{ inputs.tag }}"
+        shell: bash
 
       - name: Build executable using script
         run: |
+          # 调试：确认脚本存在
+          if (Test-Path "scripts/build_exe.ps1") {
+            Write-Host "Script found."
+          } else {
+            Write-Host "Script NOT found. Listing scripts directory:"
+            Get-ChildItem scripts -ErrorAction SilentlyContinue
+            exit 1
+          }
           powershell -File scripts/build_exe.ps1
-        # 脚本应在当前目录下的 scripts/ 中，执行后生成 dist 目录
+        shell: powershell
 
       - name: Package dist folder as zip
         run: |
           Compress-Archive -Path dist\* -DestinationPath formula_recognition.zip
 
       - name: Upload zip to Release
-        uses: softprops/action-gh-release@v1.0.1
+        # 仅在标签推送或手动输入了 tag 时执行
+        if: ${{ github.ref_type == 'tag' || inputs.tag != '' }}
+        uses: softprops/action-gh-release@v2   
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: formula_recognition.zip
+          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
