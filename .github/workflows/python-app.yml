@@ -30,8 +30,8 @@ jobs:
 
       - name: Build executable using script
         run: |
-          powershell -File script/build_exe.ps1
-        # 脚本应在当前目录下的 script/ 中，执行后生成 dist 目录
+          powershell -File scripts/build_exe.ps1
+        # 脚本应在当前目录下的 scripts/ 中，执行后生成 dist 目录
 
       - name: Package dist folder as zip
         run: |
