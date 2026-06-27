@@ -38,7 +38,7 @@ jobs:
           Compress-Archive -Path dist\* -DestinationPath formula_recognition.zip
 
       - name: Upload zip to Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v1.0.1
         with:
           files: formula_recognition.zip
         env:
