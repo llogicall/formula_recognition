@@ -13,7 +13,9 @@ on:
         type: string
 
 jobs:
-  build:
+  build: 
+    permissions:
+      contents: write  
     runs-on: windows-latest
 
     steps:
