@@ -1,4 +1,5 @@
 import base64
+import json
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
@@ -82,7 +83,7 @@ class OCRClient:
                     "content": [
                         {
                             "type": "text",
-                            "text": "请识别图片中的数学公式，只输出纯 LaTeX，不要添加解释、前后缀或 Markdown 代码块。",
+                            "text": "请识别图片中的数学公式，输出 JSON 格式：{\"latex\": \"公式的 LaTeX 代码\", \"confidence\": 0.0-1.0 之间的浮点数表示置信度}。只输出纯 JSON，不要添加任何其他内容。",
                         },
                         {
                             "type": "image_url",
@@ -113,6 +114,9 @@ class OCRClient:
             message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
             content = message.get("content")
             if isinstance(content, str):
+                parsed = self._try_parse_json(content)
+                if parsed and isinstance(parsed.get("latex"), str):
+                    return parsed["latex"].strip()
                 return self._clean_latex_text(content)
             if isinstance(content, list):
                 text_parts = []
@@ -123,7 +127,11 @@ class OCRClient:
                         elif item.get("type") == "text" and isinstance(item.get("content"), str):
                             text_parts.append(item["content"])
                 if text_parts:
-                    return self._clean_latex_text("\n".join(text_parts))
+                    joined = "\n".join(text_parts)
+                    parsed = self._try_parse_json(joined)
+                    if parsed and isinstance(parsed.get("latex"), str):
+                        return parsed["latex"].strip()
+                    return self._clean_latex_text(joined)
 
         return ""
 
@@ -139,7 +147,39 @@ class OCRClient:
         if isinstance(data.get("confidence"), (int, float)):
             return float(data["confidence"])
 
+        choices = payload.get("choices", [])
+        if choices:
+            message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
+            content = message.get("content")
+            if isinstance(content, str):
+                parsed = self._try_parse_json(content)
+                if parsed and isinstance(parsed.get("confidence"), (int, float)):
+                    return float(parsed["confidence"])
+            if isinstance(content, list):
+                text_parts = []
+                for item in content:
+                    if isinstance(item, dict):
+                        if isinstance(item.get("text"), str):
+                            text_parts.append(item["text"])
+                        elif item.get("type") == "text" and isinstance(item.get("content"), str):
+                            text_parts.append(item["content"])
+                if text_parts:
+                    parsed = self._try_parse_json("\n".join(text_parts))
+                    if parsed and isinstance(parsed.get("confidence"), (int, float)):
+                        return float(parsed["confidence"])
+
         return None
+
+    def _try_parse_json(self, text: str) -> Optional[Dict[str, Any]]:
+        cleaned = text.strip()
+        if cleaned.startswith("```") and cleaned.endswith("```"):
+            lines = cleaned.splitlines()
+            if len(lines) >= 3:
+                cleaned = "\n".join(lines[1:-1]).strip()
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            return None
 
     def _clean_latex_text(self, text: str) -> str:
         cleaned = text.strip()

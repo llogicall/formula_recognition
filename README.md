@@ -1,187 +1,125 @@
 # Formula Recognition
 
-_A Windows desktop formula recognition tool with tray residency, screenshot capture, GLM vision OCR, history records, and packaged exe output._
+> [English](README.en.md) | **中文**
+
+*Windows 桌面公式识别工具 —— 截图、GLM 视觉识别、LaTeX 输出、历史记录、托盘驻留、打包 exe。*
 
 ---
 
-Formula Recognition is a PySide6 desktop application for capturing formulas from the screen and converting them to LaTeX. It is designed to stay in the Windows system tray, support multi-monitor screenshot selection, save Markdown history records, and provide a lightweight rendered preview for recognized formulas.
+## 功能
 
-## Features
+- 常驻系统托盘，支持主窗口、截图、设置、退出
+- 多屏幕截图框选（含外接显示器）
+- GLM 视觉大模型识别数学公式，输出 LaTeX
+- 识别结果以悬浮 Toast 展示（5 秒淡出，带淡入淡出动画）
+- 可选自动复制 LaTeX 到剪贴板
+- LaTeX 源码区可编辑，公式预览实时更新
+- 历史记录自动刷新，按日保存 Markdown 文件
+- 柔和蓝色 UI 主题，圆角控件
+- 全局截图热键，默认 `Ctrl+Alt+M`
+- 关闭主窗口时默认隐藏至托盘
 
-- Resident system tray app with main window, screenshot, settings, and exit actions
-- Main menu bar exposes `截图`, `设置`, and `退出` as direct top-level actions
-- Main history window with record table, raw LaTeX detail, and formula preview
-- Editable LaTeX detail panel with live formula preview updates
-- History window refreshes automatically after each recognition record is written
-- Soft desktop UI theme with rounded controls, calm colors, and readable spacing
-- Global screenshot hotkey, default `Ctrl+Alt+M`
-- Multi-monitor capture overlay, including external displays
-- GLM vision OCR via chat-completions compatible endpoint
-- Floating result toast that fades after 5 seconds
-- Floating result toast with fade-in and fade-out animation
-- Optional automatic clipboard copy
-- Configurable model, API endpoint, API key, hotkey, and history directory
-- Optional screenshot persistence alongside Markdown history records
-- Close-to-tray behavior controlled by settings
-- PyInstaller onedir packaging for Windows release
-
-## How it works
+## 工作原理
 
 ```mermaid
 flowchart LR
-    accTitle: Formula Recognition Workflow
-    accDescr: Formula recognition flow from user capture through OCR, result presentation, and history persistence.
-
-    user_capture([User starts capture]) --> screen_overlay[Show capture overlay]
-    screen_overlay --> selected_region[Crop selected region]
-    selected_region --> glm_ocr[Send image to GLM OCR]
-    glm_ocr --> latex_result{LaTeX returned?}
-    latex_result -->|Yes| show_toast[Show floating result]
-    latex_result -->|Yes| save_history[Save history record]
-    latex_result -->|No| show_error[Show error result]
+    user_capture([用户截图]) --> screen_overlay[显示截图遮罩]
+    screen_overlay --> selected_region[框选区域]
+    selected_region --> glm_ocr[发送给 GLM OCR]
+    glm_ocr --> latex_result{返回了 LaTeX?}
+    latex_result -->|是| show_toast[悬浮结果 Toast]
+    latex_result -->|是| save_history[保存历史记录]
+    latex_result -->|否| show_error[显示错误]
     show_error --> save_history
-    save_history --> history_window[Refresh history window]
-
-    classDef start fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#3b0764
-    classDef process fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
-    classDef decision fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
-    classDef success fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-
-    class user_capture start
-    class screen_overlay,selected_region,glm_ocr,show_toast,show_error,save_history process
-    class latex_result decision
-    class history_window success
+    save_history --> history_window[刷新历史窗口]
 ```
 
-## Project structure
+## 快速开始
 
-| Path | Purpose |
-| --- | --- |
-| `app.py` | Application entry point and dependency wiring |
-| `formula_recognition/` | Core package for config, OCR, capture, history, tray, UI, and workflow |
-| `formula_recognition/capture/` | Multi-screen geometry and screenshot overlay |
-| `formula_recognition/ui/` | Main window, settings window, result toast, and formula preview |
-| `tests/` | Pytest suite for app assembly, OCR, workflow, UI, packaging, and history |
-| `data/config.example.json` | Safe example configuration for new users |
-| `USER_MANUAL.md` | End-user manual in Chinese |
-| `PROGRESS.md` | Maintainer progress notes |
-| `AGENTS.md` | Contributor and agent guide |
-| `scripts/build_exe.ps1` | Windows PyInstaller build script |
+### 环境要求
 
-## Requirements
+- Windows 桌面环境
+- Python ≥ 3.8
+- 网络可访问 GLM API 端点
+- 有效的 GLM API Key
 
-- Windows desktop environment
-- Python 3.8 or newer
-- Network access to your configured GLM API endpoint
-- A valid GLM API key
-
-Install runtime dependencies:
+### 安装 & 运行
 
 ```bash
 pip install -r requirements.txt
-```
-
-Install development and packaging dependencies:
-
-```bash
-pip install -r requirements-dev.txt
-```
-
-## Configuration
-
-Runtime configuration is stored at `data/config.json`. This file is ignored by Git because it can contain secrets.
-
-Start from the example:
-
-```powershell
-Copy-Item data/config.example.json data/config.json
-```
-
-Then edit `data/config.json` or use the in-app settings window:
-
-```json
-{
-  "glm": {
-    "api_key": "sk-your-api-key",
-    "endpoint": "https://open.bigmodel.cn/api/paas/v4",
-    "model": "GLM-4V-Flash"
-  },
-  "hotkey": "ctrl+alt+m",
-  "history_dir": "data/history",
-  "auto_copy": true,
-  "save_screenshot": true,
-  "close_to_tray": true
-}
-```
-
-`endpoint` may be a GLM base URL such as `https://open.bigmodel.cn/api/paas/v4`; the app normalizes it to `/chat/completions` for GLM requests.
-
-## Run locally
-
-```bash
 python app.py
 ```
 
-The app opens the main history window and creates a system tray icon. Closing the main window hides it by default; use the tray or menu `退出` action to fully exit.
+首次运行会自动生成 `data/config.json`。打开设置界面填写 API Key 即可使用。
 
-## Usage
-
-1. Open `设置` and configure your API key, endpoint, model, and history directory.
-2. Start recognition from the main menu, tray menu, or the default `Ctrl+Alt+M` hotkey.
-3. Drag-select a formula region on any connected screen.
-4. Review the floating result toast and the saved record in the main history window.
-5. Use the history detail panel to inspect raw LaTeX and the lightweight formula preview.
-
-## Testing
-
-Run the full test suite:
-
-```bash
-python -m pytest tests -v
-```
-
-The suite uses fakes for OCR, capture, and UI-facing collaborators where possible. Real desktop verification is still recommended for tray visibility, global hotkeys, and manual drag selection.
-
-## Build a Windows exe
-
-Install dev dependencies first, then run:
+### 打包 exe
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/build_exe.ps1
 ```
 
-The release artifact is written to:
+输出：`dist/FormulaRecognition/FormulaRecognition.exe`
 
-```text
-dist/FormulaRecognition/FormulaRecognition.exe
+## 使用说明
+
+详细操作请参阅 **[用户说明书](USER_MANUAL.md)**，包含：
+
+- 首次配置指引
+- 截图识别操作
+- 历史记录管理
+- 常见问题解答
+
+## 配置
+
+运行时配置保存在 `data/config.json`（已加入 `.gitignore`，不会误提交）。
+
+| 字段 | 说明 | 默认值 |
+|------|------|--------|
+| `glm.api_key` | GLM API Key | `""` |
+| `glm.endpoint` | API 基础地址 | `""`（自动拼接 `/chat/completions`） |
+| `glm.model` | 模型名 | `glm-4.1v-thinking-flashx` |
+| `hotkey` | 全局截图热键 | `ctrl+alt+m` |
+| `history_dir` | 历史记录目录 | `data/history` |
+| `auto_copy` | 自动复制到剪贴板 | `true` |
+| `save_screenshot` | 保存截图文件 | `true` |
+| `close_to_tray` | 关闭主窗口时隐藏至托盘 | `true` |
+| `strip_latex_delimiters` | 复制时去除 LaTeX 外围标记 | `true` |
+
+## 项目结构
+
+```
+formula_recognition/
+├── app.py                          # 入口 + 依赖装配
+├── formula_recognition/
+│   ├── capture/                    # 多屏截图遮罩
+│   ├── ui/                         # 主窗口、设置、Toast、公式预览
+│   ├── config.py                   # 配置加载与保存
+│   ├── ocr.py                      # GLM OCR 客户端
+│   ├── history.py                  # Markdown 历史记录
+│   ├── hotkey.py                   # 全局热键
+│   ├── tray.py                     # 系统托盘
+│   ├── workflow.py                 # 工作流编排
+│   └── paths.py                    # 路径工具
+├── data/config.json                # 运行时配置（已忽略）
+├── data/history/                   # 历史记录（已忽略）
+├── scripts/build_exe.ps1           # 打包脚本
+├── formula_recognition.spec        # PyInstaller 配置
+├── AGENTS.md                       # AI 助手指南
+└── USER_MANUAL.md                  # 用户说明书
 ```
 
-`dist/` and `build/` are ignored by Git. Attach packaged artifacts to GitHub Releases instead of committing them.
+## 已知限制
 
-## Release checklist
+- 修改热键后需重启应用才能重新注册
+- LaTeX 预览为轻量 Qt 富文本渲染，不支持所有 LaTeX 宏包
+- 托盘、热键、拖拽选框的行为需要实际 GUI 验证
 
-- Run `python -m pytest tests -v`
-- Run `python app.py` and verify it stays resident with an empty stderr
-- Build with `scripts/build_exe.ps1`
-- Smoke-test `dist/FormulaRecognition/FormulaRecognition.exe`
-- Confirm `data/config.json` contains no real API key before sharing logs or screenshots
-- Confirm generated `data/history/`, `build/`, and `dist/` files are not staged
-- Add a repository license before public distribution if reuse terms matter
+## 安全 & 隐私
 
-## Security and privacy
-
-- Do not commit `data/config.json`; it may contain a real API key
-- History records and screenshots may contain sensitive screen content
-- Prefer a private history directory when recognizing confidential formulas
-- Review generated Markdown records before sharing them publicly
-
-## Known limits
-
-- Hotkey changes require an app restart before re-registration
-- GLM responses may not include confidence, so confidence can be empty
-- Formula preview is lightweight Qt rich text and does not implement every LaTeX package or environment
-- Manual GUI verification is still needed for tray, hotkey, and drag-selection behavior
+- `data/config.json` 可能包含 API Key，**禁止提交**到版本控制
+- 历史记录和截图可能包含敏感屏幕内容
+- 建议使用专用历史目录存储机密公式
 
 ## License
 
-No license file is currently included. Add a `LICENSE` file before publishing if you want to grant reuse rights.
+尚未添加许可证文件。发布前请添加 `LICENSE` 文件以明确授权条款。

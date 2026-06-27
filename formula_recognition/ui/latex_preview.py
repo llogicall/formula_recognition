@@ -45,7 +45,7 @@ def render_latex_preview_html(latex: str) -> str:
 
 def _wrap(body: str) -> str:
     return (
-        '<div style="font-size:20px; line-height:1.5; color:#111827;">'
+        '<div style="font-size:20px; line-height:1.5; color:#111827; font-family:\'Times New Roman\', serif;">'
         f"{body}"
         "</div>"
     )

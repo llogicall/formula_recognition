@@ -29,6 +29,8 @@ class SettingsWindow(QDialog):
         self.auto_copy_check.setChecked(config.auto_copy)
         self.save_screenshot_check = QCheckBox("保存截图到历史记录")
         self.save_screenshot_check.setChecked(config.save_screenshot)
+        self.strip_delims_check = QCheckBox("复制到剪贴板时去除 \[ \] \( \) 等外围标记")
+        self.strip_delims_check.setChecked(config.strip_latex_delimiters)
         self.close_to_tray_check = QCheckBox("关闭主窗口时保持后台运行")
         self.close_to_tray_check.setChecked(config.close_to_tray)
 
@@ -43,6 +45,7 @@ class SettingsWindow(QDialog):
         form.addRow("History Dir", self.history_dir_edit)
         form.addRow("", self.auto_copy_check)
         form.addRow("", self.save_screenshot_check)
+        form.addRow("", self.strip_delims_check)
         form.addRow("", self.close_to_tray_check)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
@@ -66,6 +69,7 @@ class SettingsWindow(QDialog):
                 history_dir=self.history_dir_edit.text().strip(),
                 auto_copy=self.auto_copy_check.isChecked(),
                 save_screenshot=self.save_screenshot_check.isChecked(),
+                strip_latex_delimiters=self.strip_delims_check.isChecked(),
                 close_to_tray=self.close_to_tray_check.isChecked(),
             )
         )

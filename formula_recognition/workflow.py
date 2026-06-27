@@ -68,4 +68,4 @@ class WorkflowController:
             save_image=config.save_screenshot,
         )
         self.history_updated_callback()
-        self.presenter.show_result(result, auto_copy=config.auto_copy)
+        self.presenter.show_result(result, auto_copy=config.auto_copy, strip_latex_delimiters=config.strip_latex_delimiters)

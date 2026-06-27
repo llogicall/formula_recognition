@@ -119,11 +119,10 @@ class MainWindow(QMainWindow):
         self.latex_editor.blockSignals(False)
         self.formula_preview.setText(render_latex_preview_html(record.latex))
         self.metadata_detail.setPlainText(
-            "时间: {}\n状态: {}\n图片: {}\n置信度: {}\n错误: {}\n文件: {}".format(
+            "时间: {}\n状态: {}\n图片: {}\n错误: {}\n文件: {}".format(
                 record.timestamp,
                 record.status,
                 record.image,
-                record.confidence,
                 record.error,
                 record.path,
             )

@@ -17,6 +17,7 @@ class AppConfig:
     auto_copy: bool = True
     save_screenshot: bool = True
     close_to_tray: bool = True
+    strip_latex_delimiters: bool = True
 
 
 class AppConfigStore:
@@ -42,6 +43,7 @@ class AppConfigStore:
             auto_copy=data.get("auto_copy", True),
             save_screenshot=data.get("save_screenshot", True),
             close_to_tray=data.get("close_to_tray", True),
+            strip_latex_delimiters=data.get("strip_latex_delimiters", True),
         )
 
     def save(self, config: AppConfig) -> None:
@@ -57,6 +59,7 @@ class AppConfigStore:
             "auto_copy": config.auto_copy,
             "save_screenshot": config.save_screenshot,
             "close_to_tray": config.close_to_tray,
+            "strip_latex_delimiters": config.strip_latex_delimiters,
         }
         self.config_path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2),

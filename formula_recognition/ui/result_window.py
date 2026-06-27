@@ -1,6 +1,8 @@
 from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QTimer, Qt
 from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QVBoxLayout, QWidget
 
+from formula_recognition.ui.latex_preview import _strip_math_delimiters
+
 
 class FloatingResultToast(QWidget):
     def __init__(self, latex: str, confidence, parent=None, display_ms: int = 5000, fade_ms: int = 800):
@@ -114,9 +116,10 @@ class ResultPresenter:
         self.toast_cls = toast_cls
         self.active_toasts = []
 
-    def show_result(self, result, auto_copy: bool = True):
+    def show_result(self, result, auto_copy: bool = True, strip_latex_delimiters: bool = True):
         if auto_copy:
-            self.app.clipboard().setText(result.latex)
+            latex = _strip_math_delimiters(result.latex) if strip_latex_delimiters else result.latex
+            self.app.clipboard().setText(latex)
 
         toast = self.toast_cls(result.latex, result.confidence, display_ms=5000)
         self.active_toasts.append(toast)
