@@ -56,12 +56,11 @@ jobs:
           Compress-Archive -Path dist\* -DestinationPath formula_recognition.zip
 
       - name: Upload zip to Release
-        # 仅在标签推送或手动输入了 tag 时执行
-        if: ${{ github.ref_type == 'tag' || inputs.tag != '' }}
-        uses: softprops/action-gh-release@v2   
+        uses: softprops/action-gh-release@v2   # 使用有效版本
         with:
-          tag_name: ${{ inputs.tag || github.ref_name }}
+          tag_name: ${{ github.ref_name }}     # 显式传递标签名
           files: formula_recognition.zip
-          overwrite: true
+          overwrite: true                      # 允许覆盖已存在的 Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
