@@ -1,54 +1,170 @@
 import html
 
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtWidgets import QTextBrowser, QVBoxLayout, QWidget
 
-GREEK_SYMBOLS = {
-    "alpha": "α",
-    "beta": "β",
-    "gamma": "γ",
-    "delta": "δ",
-    "epsilon": "ε",
-    "theta": "θ",
-    "lambda": "λ",
-    "mu": "μ",
-    "pi": "π",
-    "rho": "ρ",
-    "sigma": "σ",
-    "phi": "φ",
-    "omega": "ω",
-    "Delta": "Δ",
-    "Theta": "Θ",
-    "Lambda": "Λ",
-    "Pi": "Π",
-    "Sigma": "Σ",
-    "Phi": "Φ",
-    "Omega": "Ω",
+try:
+    from PySide6.QtWebEngineWidgets import QWebEngineView
+except ImportError:  # pragma: no cover - only used on incomplete Qt installs
+    QWebEngineView = None
+
+
+MATHJAX_SCRIPT_URL = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+MATHJAX_BASE_URL = QUrl("https://cdn.jsdelivr.net/")
+DISPLAY_ENVIRONMENTS = {
+    "align",
+    "align*",
+    "equation",
+    "equation*",
+    "flalign",
+    "flalign*",
+    "gather",
+    "gather*",
+    "multline",
+    "multline*",
 }
 
-OPERATORS = {
-    "cdot": "·",
-    "times": "×",
-    "pm": "±",
-    "leq": "≤",
-    "geq": "≥",
-    "neq": "≠",
-    "infty": "∞",
-}
+
+class LatexPreviewWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setProperty("class", "previewCard")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setMinimumHeight(120)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self.setLayout(layout)
+
+        if QWebEngineView is not None:
+            self.viewer = QWebEngineView()
+            self.viewer.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+            self._uses_web_engine = True
+        else:
+            self.viewer = QTextBrowser()
+            self.viewer.setOpenExternalLinks(False)
+            self._uses_web_engine = False
+
+        layout.addWidget(self.viewer)
+        self.set_latex("")
+
+    def set_latex(self, latex: str) -> None:
+        document = render_latex_preview_html(latex)
+        if self._uses_web_engine:
+            self.viewer.setHtml(document, MATHJAX_BASE_URL)
+        else:
+            self.viewer.setHtml(document)
 
 
 def render_latex_preview_html(latex: str) -> str:
     latex = _strip_math_delimiters(latex.strip())
     if not latex:
-        return _wrap("暂无公式预览")
+        return _render_empty_preview_html()
 
-    return _wrap(_render_tokens(latex))
+    math_body = _format_math_body(latex)
+    return f"""<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    html,
+    body {{
+      margin: 0;
+      min-height: 100%;
+      background: #ffffff;
+      color: #111827;
+      font-family: "Cambria Math", "Times New Roman", serif;
+    }}
+
+    body {{
+      box-sizing: border-box;
+      padding: 12px 14px;
+      overflow-wrap: anywhere;
+    }}
+
+    #preview {{
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+      line-height: 1.5;
+    }}
+
+    mjx-container {{
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-width: 100%;
+      padding: 4px 0;
+    }}
+
+    .fallback {{
+      white-space: pre-wrap;
+      color: #475569;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+    }}
+  </style>
+  <script>
+    window.MathJax = {{
+      tex: {{
+        inlineMath: [["\\\\(", "\\\\)"], ["$", "$"]],
+        displayMath: [["\\\\[", "\\\\]"], ["$$", "$$"]],
+        processEscapes: true,
+        processEnvironments: true,
+        packages: {{"[+]": ["ams", "autoload", "boldsymbol", "color", "newcommand", "noerrors", "noundefined"]}}
+      }},
+      svg: {{
+        fontCache: "global",
+        scale: 1.05
+      }},
+      startup: {{
+        typeset: true
+      }}
+    }};
+  </script>
+  <script defer src="{MATHJAX_SCRIPT_URL}"></script>
+</head>
+<body>
+  <main id="preview">{math_body}</main>
+</body>
+</html>"""
 
 
-def _wrap(body: str) -> str:
-    return (
-        '<div style="font-size:20px; line-height:1.5; color:#111827; font-family:\'Times New Roman\', serif;">'
-        f"{body}"
-        "</div>"
-    )
+def _render_empty_preview_html() -> str:
+    return """<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #ffffff;
+      color: #64748b;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    body {
+      box-sizing: border-box;
+      padding: 12px 14px;
+    }
+
+    #preview {
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main id="preview">暂无公式预览</main>
+</body>
+</html>"""
 
 
 def _strip_math_delimiters(value: str) -> str:
@@ -59,88 +175,20 @@ def _strip_math_delimiters(value: str) -> str:
     return value
 
 
-def _render_tokens(value: str) -> str:
-    output = []
-    index = 0
-    while index < len(value):
-        if value.startswith(r"\frac", index):
-            numerator, next_index = _read_braced(value, index + len(r"\frac"))
-            denominator, index = _read_braced(value, next_index)
-            output.append(_render_fraction(numerator, denominator))
-            continue
-
-        if value.startswith(r"\sqrt", index):
-            radicand, index = _read_braced(value, index + len(r"\sqrt"))
-            output.append("√" + _group(_render_tokens(radicand)))
-            continue
-
-        char = value[index]
-        if char in "^_":
-            content, index = _read_script(value, index + 1)
-            tag = "sup" if char == "^" else "sub"
-            output.append(f"<{tag}>{_render_tokens(content)}</{tag}>")
-            continue
-
-        if char == "\\":
-            command, index = _read_command(value, index + 1)
-            output.append(html.escape(GREEK_SYMBOLS.get(command, OPERATORS.get(command, command))))
-            continue
-
-        if char == "{":
-            content, index = _read_braced(value, index)
-            output.append(_render_tokens(content))
-            continue
-
-        output.append(html.escape(char))
-        index += 1
-
-    return "".join(output).replace("\n", "<br>")
+def _format_math_body(latex: str) -> str:
+    escaped_latex = html.escape(latex)
+    if _read_top_level_environment(latex) in DISPLAY_ENVIRONMENTS:
+        return escaped_latex
+    return f"\\[{escaped_latex}\\]"
 
 
-def _render_fraction(numerator: str, denominator: str) -> str:
-    return (
-        '<span style="display:inline-block; text-align:center; vertical-align:middle;">'
-        f'<span style="display:block; border-bottom:1px solid #111827; padding:0 4px;">{_render_tokens(numerator)}</span>'
-        f'<span style="display:block; padding:0 4px;">{_render_tokens(denominator)}</span>'
-        "</span>"
-    )
+def _read_top_level_environment(latex: str) -> str:
+    stripped = latex.lstrip()
+    prefix = r"\begin{"
+    if not stripped.startswith(prefix):
+        return ""
 
-
-def _group(content: str) -> str:
-    return f'<span style="padding-left:2px;">{content}</span>'
-
-
-def _read_script(value: str, index: int):
-    if index < len(value) and value[index] == "{":
-        return _read_braced(value, index)
-    if index < len(value):
-        return value[index], index + 1
-    return "", index
-
-
-def _read_braced(value: str, index: int):
-    while index < len(value) and value[index].isspace():
-        index += 1
-    if index >= len(value) or value[index] != "{":
-        return "", index
-
-    depth = 0
-    start = index + 1
-    while index < len(value):
-        if value[index] == "{":
-            depth += 1
-        elif value[index] == "}":
-            depth -= 1
-            if depth == 0:
-                return value[start:index], index + 1
-        index += 1
-    return value[start:], len(value)
-
-
-def _read_command(value: str, index: int):
-    start = index
-    while index < len(value) and value[index].isalpha():
-        index += 1
-    if start == index and index < len(value):
-        return value[index], index + 1
-    return value[start:index], index
+    end_index = stripped.find("}", len(prefix))
+    if end_index == -1:
+        return ""
+    return stripped[len(prefix) : end_index]

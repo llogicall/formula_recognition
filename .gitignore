@@ -17,3 +17,8 @@ venv/
 env/
 dist/
 build/
+
+tests/
+tests/__pycache__/
+
+.vscode/
