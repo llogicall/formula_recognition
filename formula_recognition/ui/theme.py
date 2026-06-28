@@ -100,11 +100,10 @@ def build_app_stylesheet() -> str:
         font-weight: 600;
         background: transparent;
     }
-    QLabel[class="previewCard"] {
+    QWidget[class="previewCard"] {
         background: #ffffff;
         border: 1px solid #dbe3ef;
         border-radius: 8px;
-        padding: 14px;
     }
     QSplitter::handle {
         background: #e5edf6;

@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from formula_recognition.ui.latex_preview import render_latex_preview_html
+from formula_recognition.ui.latex_preview import LatexPreviewWidget
 
 
 class MainWindow(QMainWindow):
@@ -47,28 +47,27 @@ class MainWindow(QMainWindow):
 
         self.metadata_detail = QPlainTextEdit()
         self.metadata_detail.setReadOnly(True)
+        self.metadata_detail.setMinimumHeight(120)
         self.detail = self.metadata_detail
 
         self.latex_editor_title = QLabel("LaTeX")
         self.latex_editor_title.setProperty("class", "sectionTitle")
         self.latex_editor = QPlainTextEdit()
         self.latex_editor.setReadOnly(False)
+        self.latex_editor.setMinimumHeight(120)
         self.latex_editor.setPlaceholderText("编辑 LaTeX 后会实时更新上方预览")
         self.latex_editor.textChanged.connect(self._render_preview_from_editor)
 
         self.formula_preview_title = QLabel("公式预览")
         self.formula_preview_title.setProperty("class", "sectionTitle")
-        self.formula_preview = QLabel()
-        self.formula_preview.setProperty("class", "previewCard")
-        self.formula_preview.setWordWrap(True)
-        self.formula_preview.setMinimumHeight(96)
+        self.formula_preview = LatexPreviewWidget()
 
         detail_panel = QWidget()
         detail_layout = QVBoxLayout()
         detail_layout.setContentsMargins(16, 12, 16, 12)
         detail_layout.setSpacing(10)
         detail_layout.addWidget(self.formula_preview_title)
-        detail_layout.addWidget(self.formula_preview)
+        detail_layout.addWidget(self.formula_preview, 1)
         detail_layout.addWidget(self.latex_editor_title)
         detail_layout.addWidget(self.latex_editor, 1)
         detail_layout.addWidget(self.metadata_detail, 1)
@@ -105,7 +104,7 @@ class MainWindow(QMainWindow):
             self.table.selectRow(0)
             self._render_detail(self.records[0])
         else:
-            self.formula_preview.setText(render_latex_preview_html(""))
+            self.formula_preview.set_latex("")
             self.latex_editor.setPlainText("")
             self.metadata_detail.setPlainText("暂无历史记录")
 
@@ -117,7 +116,7 @@ class MainWindow(QMainWindow):
         self.latex_editor.blockSignals(True)
         self.latex_editor.setPlainText(record.latex)
         self.latex_editor.blockSignals(False)
-        self.formula_preview.setText(render_latex_preview_html(record.latex))
+        self.formula_preview.set_latex(record.latex)
         self.metadata_detail.setPlainText(
             "时间: {}\n状态: {}\n图片: {}\n错误: {}\n文件: {}".format(
                 record.timestamp,
@@ -129,7 +128,7 @@ class MainWindow(QMainWindow):
         )
 
     def _render_preview_from_editor(self):
-        self.formula_preview.setText(render_latex_preview_html(self.latex_editor.toPlainText()))
+        self.formula_preview.set_latex(self.latex_editor.toPlainText())
 
     def closeEvent(self, event):
         if self.close_to_tray_getter():

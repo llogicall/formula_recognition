@@ -102,7 +102,7 @@ formula_recognition/
 ## 已知限制
 
 - 修改热键后需重启应用才能重新注册
-- LaTeX 预览为轻量 Qt 富文本渲染，不支持所有 LaTeX 宏包
+- LaTeX 预览使用 Qt WebEngine + MathJax 渲染，支持更完整的常用数学语法
 - 托盘、热键、拖拽选框的行为需要实际 GUI 验证
 
 ## 安全 & 隐私

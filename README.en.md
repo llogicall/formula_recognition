@@ -106,7 +106,7 @@ formula_recognition/
 ## Known limits
 
 - Hotkey changes require an app restart before re-registration
-- Formula preview is lightweight Qt rich text; does not implement every LaTeX package or environment
+- Formula preview uses Qt WebEngine + MathJax for broader common math syntax support
 - Manual GUI verification is still needed for tray, hotkey, and drag-selection behavior
 
 ## Security & privacy
